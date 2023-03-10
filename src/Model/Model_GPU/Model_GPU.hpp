@@ -15,6 +15,7 @@ private:
 	std::vector<float3> positionsf3    ;
 	std::vector<float3> velocitiesf3   ;
 	std::vector<float3> accelerationsf3;
+	std::vector<float> massesf;
 
 	float3* positionsGPU;
 	float3* velocitiesGPU;

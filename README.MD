@@ -94,19 +94,22 @@ Launching galax should now open a window with the graphical display.
 For now, the performance (FPS: Frame Per Second) is low.
 It is possible to accelerate the processing by using OpenMP for multithreading and the xsimd project (https://github.com/xtensor-stack/xsimd) for vectorization.
 ```bash
-    cmake -E chdir "build" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
-    cmake --build "build" --config Release --parallel
-    ./build/bin/galax -c CPU_FAST # use CPU_FAST version with multithreading & vectorization
+    cmake -E make_directory "build_omp"
+    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
+    cmake --build "build_omp" --config Release --parallel
+    ./build_omp/bin/galax -c CPU_FAST # use CPU_FAST version with multithreading & vectorization
 ```
-
+## With SDL2
+cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
 ### Activating CUDA
 
 Provided a software platform with a working version of the CUDA toolkit, it is also possible to use the GPU to perform the simulation. Please refer to  online documentation to correctly install CUDA on your system (https://docs.nvidia.com/cuda/).
 
 ```bash
-    cmake -E chdir "build" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_CUDA=ON -DCUDA_TOOLKIT_ROOT_DIR="/usr" ..
-    cmake --build "build" --config Release --parallel
-    ./build/bin/galax -c GPU # use GPU version
+    cmake -E make_directory "build_gpu"
+    cmake -E chdir "build_gpu" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_CUDA=ON -DCUDA_TOOLKIT_ROOT_DIR="/usr" ..
+    cmake --build "build_gpu" --config Release --parallel
+    ./build_gpu/bin/galax -c GPU # use GPU version
 ```
 
 ### Validating your results

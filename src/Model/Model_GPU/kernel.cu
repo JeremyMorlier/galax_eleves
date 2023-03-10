@@ -2,6 +2,7 @@
 
 #include "cuda.h"
 #include "kernel.cuh"
+#include <iostream>
 #define DIFF_T (0.1f)
 #define EPS (1.0f)
 
@@ -27,13 +28,13 @@ __global__ void compute_acc(float3 * positionsGPU, float3 * velocitiesGPU, float
 				}
 				else
 				{
-					dij = std::sqrt(dij);
+					dij = sqrtf(dij);
 					dij = 10.0 / (dij * dij * dij);
 				}
 
-			accelerationsGPU[i].x += diffx * dij * massesGPU[j];
-			accelerationsGPU[i].y += diffy * dij * massesGPU[j];
-			accelerationsGPU[i].z += diffz * dij * massesGPU[j];
+			accelerationsGPU[i].x += diffx * dij * massesGPU[i];
+			accelerationsGPU[i].y += diffy * dij * massesGPU[i];
+			accelerationsGPU[i].z += diffz * dij * massesGPU[i];
 		}
 	}
 
@@ -55,9 +56,10 @@ void update_position_cu(float3* positionsGPU, float3* velocitiesGPU, float3* acc
 {
 	int nthreads = 128;
 	int nblocks =  (n_particles + (nthreads -1)) / nthreads;
+	std::cout << nblocks << " " << nthreads << "   " << std::endl;
 
 	compute_acc<<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU, massesGPU, n_particles);
-	maj_pos    <<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU);
+	maj_pos<<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU);
 }
 
 
