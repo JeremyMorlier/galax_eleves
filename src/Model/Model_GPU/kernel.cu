@@ -5,13 +5,13 @@
 #define DIFF_T (0.1f)
 #define EPS (1.0f)
 
-__global__ void compute_acc1(float3 * positionsGPU, float3 * velocitiesGPU, float3 * accelerationsGPU, float* massesGPU, int n_particles)
+__global__ void compute_acc(float3 * positionsGPU, float3 * velocitiesGPU, float3 * accelerationsGPU, float* massesGPU, int n_particles)
 {
 	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
 	float diffx, diffy, diffz;
 
-	for(int j = 0; j < n_particules; j++)
+	for(int j = 0; j < n_particles; j++)
 	{
 		if(i != j)
 		{
