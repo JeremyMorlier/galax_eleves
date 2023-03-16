@@ -100,7 +100,9 @@ It is possible to accelerate the processing by using OpenMP for multithreading a
     ./build_omp/bin/galax -c CPU_FAST # use CPU_FAST version with multithreading & vectorization
 ```
 ## With SDL2
-cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
+```bash
+    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
+```
 ### Activating CUDA
 
 Provided a software platform with a working version of the CUDA toolkit, it is also possible to use the GPU to perform the simulation. Please refer to  online documentation to correctly install CUDA on your system (https://docs.nvidia.com/cuda/).

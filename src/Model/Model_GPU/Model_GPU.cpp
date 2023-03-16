@@ -96,6 +96,7 @@ void Model_GPU
 ::step()
 {
 	update_position_gpu(positionsGPU, velocitiesGPU, accelerationsGPU, massesGPU, n_particles);
+	std::cout << positionsf3[0].x << std::endl;
 	cuda_memcpy(positionsf3.data(), positionsGPU, n_particles * sizeof(float3), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < n_particles; i++)
 	{
