@@ -10,6 +10,11 @@ __global__ void compute_acc(float3 * positionsGPU, float3 * velocitiesGPU, float
 {
 	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
+	// init acceleration
+	accelerationsGPU[i].x = 0.0f;
+	accelerationsGPU[i].y = 0.0f;
+	accelerationsGPU[i].z = 0.0f;
+
 	float diffx, diffy, diffz;
 	float dij;
 
