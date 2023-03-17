@@ -95,13 +95,13 @@ For now, the performance (FPS: Frame Per Second) is low.
 It is possible to accelerate the processing by using OpenMP for multithreading and the xsimd project (https://github.com/xtensor-stack/xsimd) for vectorization.
 ```bash
     cmake -E make_directory "build_omp"
-    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
+    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON  -DCMAKE_CXX_FLAGS="-mavx2" ..
     cmake --build "build_omp" --config Release --parallel
     ./build_omp/bin/galax -c CPU_FAST # use CPU_FAST version with multithreading & vectorization
 ```
 ## With SDL2
 ```bash
-    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
+    cmake -E chdir "build_omp" cmake -DCMAKE_BUILD_TYPE=Release -DGALAX_LINK_OMP=ON -DGALAX_LINK_SDL2=ON -DCMAKE_CXX_FLAGS="-mavx2" ..
 ```
 ### Activating CUDA
 
