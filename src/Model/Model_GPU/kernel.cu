@@ -10,24 +10,30 @@ __global__ void compute_acc(float4 * positionsGPU, float3 * velocitiesGPU, float
 {
 	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-	// init acceleration
-
-
-	float diffx, diffy, diffz;
-	float dij, temp;
+	// local shared memory (allows concurrent read to the same data)
+	__shared__ float4 localParticles[n_particles];
 
 	if (i < n_particles)
 	{
+		float diffx, diffy, diffz;
+		float dij, temp;
+		// each thread load its point to the shared memory
+		localParticles[i] = positionsGPU[i]
+		// wait for each thread to update the shared position of each particle
+		__syncthreads();
+
+		// reset acceleration
 		accelerationsGPU[i].x = 0.0f;
 		accelerationsGPU[i].y = 0.0f;
 		accelerationsGPU[i].z = 0.0f;
+		
 		for(int j = 0; j < n_particles; j++)
 		{
 			if(i != j)
 			{
-				diffx = positionsGPU[j].x - positionsGPU[i].x;
-				diffy = positionsGPU[j].y - positionsGPU[i].y;
-				diffz = positionsGPU[j].z - positionsGPU[i].z;
+				diffx = localParticles[j].x - localParticles[i].x;
+				diffy = localParticles[j].y - localParticles[i].y;
+				diffz = localParticles[j].z - localParticles[i].z;
 
 				dij = diffx * diffx + diffy * diffy + diffz * diffz;
 
@@ -36,9 +42,15 @@ __global__ void compute_acc(float4 * positionsGPU, float3 * velocitiesGPU, float
 				dij = (dij < 1.0)*10.0 + (dij >= 1.0)*10.0*temp*temp*temp;
 				
 
+<<<<<<< HEAD
 				accelerationsGPU[i].x += diffx * dij * positionsGPU[j].w;
 				accelerationsGPU[i].y += diffy * dij * positionsGPU[j].w;
 				accelerationsGPU[i].z += diffz * dij * positionsGPU[j].w;
+=======
+				accelerationsGPU[i].x += diffx * dij * localParticles[j].w;
+				accelerationsGPU[i].y += diffy * dij * localParticles[j].w;
+				accelerationsGPU[i].z += diffz * dij * localParticles[j].w;
+>>>>>>> cd602b6840b2eb9e3de49dc96f997b71da4e6907
 			}
 		}
 	}
