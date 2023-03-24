@@ -130,7 +130,7 @@ void Display_SDL2
 	for (int i = 0; i < particles.x.size(); i++)
 	{
 		glBegin   (GL_POINTS);
-		glColor3f (1.0f, 1.0f, 1.0f);
+		glColor3f (0.0f, 1.0f, 1.0f);
 		glVertex3f(particles.x[i], particles.y[i], particles.z[i]);
 		glEnd();
 	}

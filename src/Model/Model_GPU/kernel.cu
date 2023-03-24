@@ -5,59 +5,69 @@
 #include <iostream>
 #define DIFF_T (0.1f)
 #define EPS (1.0f)
+#define ARRAYSIZE (64)
 
-__global__ void compute_acc(float4 * positionsGPU, float3 * velocitiesGPU, float3 * accelerationsGPU, int n_particles)
+__global__ void compute_acc(float4 * positionsGPU, float3 * velocitiesGPU, float4 * accelerationsGPU, int n_particles, int nthreads, int nblocks)
 {
 	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int j = threadIdx.x;
 
 	// local shared memory (allows concurrent read to the same data)
-	__shared__ float4 localParticles[n_particles];
+	__shared__ float4 localParticles[ARRAYSIZE];
 
 	if (i < n_particles)
 	{
+
+
 		float diffx, diffy, diffz;
-		float dij, temp;
-		// each thread load its point to the shared memory
-		localParticles[i] = positionsGPU[i]
-		// wait for each thread to update the shared position of each particle
-		__syncthreads();
+		float dij;
+		float4 myPos;
+		float4 myAcc;
+		int k = 0;
 
-		// reset acceleration
-		accelerationsGPU[i].x = 0.0f;
-		accelerationsGPU[i].y = 0.0f;
-		accelerationsGPU[i].z = 0.0f;
-		
-		for(int j = 0; j < n_particles; j++)
+		// load the block own points
+		myPos = positionsGPU[i];
+		myAcc = accelerationsGPU[i];
+
+		unsigned int tempp = (n_particles + (ARRAYSIZE -1)) / ARRAYSIZE;
+
+		for(k = 0 ; k < tempp; k++)
 		{
-			if(i != j)
+			for(int q = 0; q < ARRAYSIZE/nthreads; q++)
 			{
-				diffx = localParticles[j].x - localParticles[i].x;
-				diffy = localParticles[j].y - localParticles[i].y;
-				diffz = localParticles[j].z - localParticles[i].z;
-
-				dij = diffx * diffx + diffy * diffy + diffz * diffz;
-
-				// utiliser un masque
-				temp = __frsqrt_rn(dij);
-				dij = (dij < 1.0)*10.0 + (dij >= 1.0)*10.0*temp*temp*temp;
-				
-
-<<<<<<< HEAD
-				accelerationsGPU[i].x += diffx * dij * positionsGPU[j].w;
-				accelerationsGPU[i].y += diffy * dij * positionsGPU[j].w;
-				accelerationsGPU[i].z += diffz * dij * positionsGPU[j].w;
-=======
-				accelerationsGPU[i].x += diffx * dij * localParticles[j].w;
-				accelerationsGPU[i].y += diffy * dij * localParticles[j].w;
-				accelerationsGPU[i].z += diffz * dij * localParticles[j].w;
->>>>>>> cd602b6840b2eb9e3de49dc96f997b71da4e6907
+				localParticles[ARRAYSIZE/nthreads*j + q] = positionsGPU[ARRAYSIZE/nthreads*j + q + k*ARRAYSIZE];
 			}
+
+			__syncthreads();
+			for(int p = 0; p < ARRAYSIZE; p++)
+			{
+				if(i != ARRAYSIZE*k + p)
+				{
+					diffx = __fsub_rn(localParticles[p].x, myPos.x);
+					diffy = __fsub_rn(localParticles[p].y, myPos.y);
+					diffz = __fsub_rn(localParticles[p].z, myPos.z);
+
+					dij = fmaf(diffx, diffx, fmaf(diffy, diffy, diffz*diffz ));
+					dij = __fmul_rn(10.0, __powf(fmax(dij, 1.0f) , -1.5f));
+					//dij = __fmul_rn(10.0, __powf(dij , -1.5f));
+					
+					myAcc.x += diffx * dij * localParticles[p].w;
+					myAcc.y += diffy * dij * localParticles[p].w;
+					myAcc.z += diffz * dij * localParticles[p].w;
+				}
+			}
+			__syncthreads();
 		}
+
+		myAcc.w = 0.0f;
+		__syncthreads();
+		accelerationsGPU[i] = myAcc;
+		
 	}
 
 }
 
-__global__ void maj_pos(float4 * positionsGPU, float3 * velocitiesGPU, float3 * accelerationsGPU, int n_particles)
+__global__ void maj_pos(float4 * positionsGPU, float3 * velocitiesGPU, float4 * accelerationsGPU, int n_particles)
 {
 	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -69,17 +79,22 @@ __global__ void maj_pos(float4 * positionsGPU, float3 * velocitiesGPU, float3 * 
 		positionsGPU[i].x += velocitiesGPU[i].x * 0.1f;
 		positionsGPU[i].y += velocitiesGPU[i].y * 0.1f;
 		positionsGPU[i].z += velocitiesGPU[i].z * 0.1f;
+
+		// reset acceleration
+		accelerationsGPU[i].x = 0.0f;
+		accelerationsGPU[i].y = 0.0f;
+		accelerationsGPU[i].z = 0.0f;
 	}
 
 }
 
-void update_position_cu(float4 * positionsGPU, float3* velocitiesGPU, float3* accelerationsGPU, int n_particles)
+void update_position_cu(float4 * positionsGPU, float3* velocitiesGPU, float4* accelerationsGPU, int n_particles)
 {
-	int nthreads = 128;
+	int nthreads = 64;
 	int nblocks =  (n_particles + (nthreads -1)) / nthreads;
 	//std::cout << nblocks << " " << nthreads << "   " << std::endl;
 
-	compute_acc<<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU, n_particles);
+	compute_acc<<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU, n_particles, nthreads, nblocks);
 	maj_pos<<<nblocks, nthreads>>>(positionsGPU, velocitiesGPU, accelerationsGPU, n_particles);
 }
 
